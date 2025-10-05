@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Export</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+    <h1>Test Word Export</h1>
+    <button id="testBtn">Test Export</button>
+
+    <script type="module">
+        import { Document, Paragraph, TextRun, Packer, AlignmentType } from 'https://cdn.jsdelivr.net/npm/docx@8.5.0/+esm';
+
+        document.getElementById('testBtn').addEventListener('click', async function() {
+            console.log('Testing export...');
+
+            try {
+                const doc = new Document({
+                    sections: [{
+                        properties: {},
+                        children: [
+                            new Paragraph({
+                                children: [
+                                    new TextRun({
+                                        text: "Test Document",
+                                        bold: true,
+                                        size: 32
+                                    })
+                                ],
+                                alignment: AlignmentType.CENTER
+                            })
+                        ]
+                    }]
+                });
+
+                const blob = await Packer.toBlob(doc);
+                saveAs(blob, "test.docx");
+                console.log('Success!');
+                alert('Export successful!');
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NYU Stern Syllabus Builder</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+    <!-- Fixed Action Buttons -->
+    <div class="fixed-actions">
+        <input type="file" id="loadFile" accept=".json" style="display: none;">
+        <button type="button" id="loadSampleBtn" title="Load Sample Data">Load Sample</button>
+        <button type="button" id="loadBtn" title="Load Syllabus">Load</button>
+        <button type="button" id="saveBtn" title="Save for Editing">Save</button>
+        <button type="button" id="exportWordBtn" title="Export to Word">Word</button>
+        <button type="button" id="exportPdfBtn" title="Export to PDF">PDF</button>
+    </div>
+
+    <!-- Sidebar Table of Contents -->
+    <nav class="sidebar-toc">
+        <h3>Table of Contents</h3>
+        <ul id="tocList">
+            <li><a href="#basic-info" data-section="basic-info" title="Course title, number, instructor, schedule, and office hours">Basic Course Information</a></li>
+            <li><a href="#description" data-section="description" title="High-level summary of the course content and objectives">Course Description</a></li>
+            <li><a href="#learning-outcomes" data-section="learning-outcomes" title="What students will be able to do after completing the course">Learning Outcomes</a></li>
+            <li><a href="#communication" data-section="communication" title="Your availability and preferred communication channels (optional)">Communication Strategy</a></li>
+            <li><a href="#technical" data-section="technical" title="Required tools, software, and support resources (optional)">Technical Requirements</a></li>
+            <li><a href="#requirements" data-section="requirements" title="Assignments, grading percentages, and late policy">Course Requirements</a></li>
+            <li><a href="#outline" data-section="outline" title="Week-by-week schedule of topics and readings">Course Outline</a></li>
+            <li><a href="#integrity" data-section="integrity" title="Academic honesty and plagiarism policy">Academic Integrity</a></li>
+            <li><a href="#code-of-conduct" data-section="code-of-conduct" title="Stern's code of conduct and judiciary process">Code of Conduct</a></li>
+            <li><a href="#integrity-credit" data-section="integrity-credit" title="Contact hours and credit requirements">Integrity of Credit</a></li>
+            <li><a href="#conduct" data-section="conduct" title="Professional conduct and behavior expectations">General Conduct</a></li>
+            <li><a href="#grading" data-section="grading" title="Grading distribution guidelines for your course type">Grading Guidelines</a></li>
+            <li><a href="#accessibility" data-section="accessibility" title="Accommodations for students with disabilities">Student Accessibility</a></li>
+            <li><a href="#wellness" data-section="wellness" title="Mental health and wellness resources (optional)">Student Wellness</a></li>
+            <li><a href="#pronouns" data-section="pronouns" title="Name pronunciation and pronoun preferences">Name & Pronouns</a></li>
+            <li><a href="#religious" data-section="religious" title="Accommodations for religious holidays (optional)">Religious Observances</a></li>
+            <li><a href="#devices" data-section="devices" title="Policy on laptops, phones, and tablets (optional)">Electronic Devices</a></li>
+            <li><a href="#ai" data-section="ai" title="Policy on using AI tools like ChatGPT (optional)">AI Guidance</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <header>
+            <h1>NYU Stern School of Business</h1>
+            <h2>Syllabus Builder</h2>
+        </header>
+
+        <main>
+            <form id="syllabusForm">
+                <!-- Basic Course Information -->
+                <section class="form-section" id="basic-info">
+                    <h3>Basic Course Information</h3>
+                    
+                    <div class="form-group">
+                        <label for="courseTitle">Course Title *</label>
+                        <input type="text" id="courseTitle" name="courseTitle" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="courseNumber">Course Number / Section *</label>
+                        <input type="text" id="courseNumber" name="courseNumber" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="term">Term *</label>
+                        <input type="text" id="term" name="term" required placeholder="e.g., Spring 2025">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="credits">Credits *</label>
+                        <select id="credits" name="credits" required>
+                            <option value="">Choose credits...</option>
+                            <option value="1">1</option>
+                            <option value="1.5">1.5</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="6">6</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="prerequisites">Prerequisites</label>
+                        <textarea id="prerequisites" name="prerequisites" rows="2"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="instructorName">Instructor Name *</label>
+                        <input type="text" id="instructorName" name="instructorName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="officeHours">Office Hours *</label>
+                        <textarea id="officeHours" name="officeHours" required rows="2"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="classSchedule">Class Schedule *</label>
+                        <input type="text" id="classSchedule" name="classSchedule" required placeholder="e.g., MW 2:00-3:15 PM, Room 123">
+                    </div>
+                </section>
+
+                <!-- Course Description -->
+                <section class="form-section" id="description">
+                    <h3>Course Description</h3>
+                    
+                    <div class="form-group">
+                        <label for="courseDescription">Course Description *</label>
+                        <textarea id="courseDescription" name="courseDescription" required rows="4" placeholder="Provide a high-level summary of the course here."></textarea>
+                    </div>
+                </section>
+
+                <!-- Learning Outcomes -->
+                <section class="form-section" id="learning-outcomes">
+                    <h3>Learning Outcomes</h3>
+                    
+                    <div class="form-group">
+                        <label for="learningOutcomes">Learning Outcomes *</label>
+                        <textarea id="learningOutcomes" name="learningOutcomes" required rows="6" placeholder="At the conclusion of this course, students will be able to:&#10;- [Learning outcome 1]&#10;- [Learning outcome 2]&#10;- [Learning outcome 3]"></textarea>
+                    </div>
+                </section>
+
+                <!-- Communication Strategy -->
+                <section class="form-section" id="communication">
+                    <h3>Communication Strategy</h3>
+                    
+                    <div class="form-group">
+                        <label for="communicationStrategy">Communication Strategy</label>
+                        <textarea id="communicationStrategy" name="communicationStrategy" rows="3" placeholder="Describe your availability, preferred communications channels, response time, etc."></textarea>
+                    </div>
+                </section>
+
+                <!-- Technical Requirements -->
+                <section class="form-section" id="technical">
+                    <h3>Technical Requirements</h3>
+                    
+                    <div class="form-group">
+                        <label for="technicalRequirements">Technical Requirements</label>
+                        <textarea id="technicalRequirements" name="technicalRequirements" rows="3" placeholder="List required tools and support resources."></textarea>
+                    </div>
+                </section>
+
+                <!-- Course Requirements and Assignments -->
+                <section class="form-section" id="requirements">
+                    <h3>Course Requirements and Assignments</h3>
+                    
+                    <div class="form-group">
+                        <label for="assignmentTypes">Assignment Types and Descriptions *</label>
+                        <textarea id="assignmentTypes" name="assignmentTypes" required rows="4"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="gradingPercentages">Grading Percentages *</label>
+                        <textarea id="gradingPercentages" name="gradingPercentages" required rows="4" placeholder="e.g.,&#10;Participation: 15%&#10;Midterm Exam: 25%&#10;Final Project: 30%&#10;Assignments: 30%"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dueDatesPolicy">Due Dates and Late Policy *</label>
+                        <textarea id="dueDatesPolicy" name="dueDatesPolicy" required rows="3"></textarea>
+                    </div>
+                </section>
+
+                <!-- Course Outline -->
+                <section class="form-section" id="outline">
+                    <h3>Course Outline</h3>
+                    
+                    <div class="form-group">
+                        <label for="courseOutline">Course Outline *</label>
+                        <textarea id="courseOutline" name="courseOutline" required rows="8" placeholder="Insert a detailed schedule of topics, readings, activities, and due dates."></textarea>
+                    </div>
+                </section>
+
+                <!-- Academic Integrity -->
+                <section class="form-section" id="integrity">
+                    <h3>Academic Integrity</h3>
+                    
+                    <div class="form-group">
+                        <label for="academicIntegrity">Academic Integrity Policy *</label>
+                        <select id="academicIntegrity" name="academicIntegrity" required>
+                            <option value="">Choose appropriate policy...</option>
+                            <option value="standard">Standard Policy: Academic integrity is fundamental to the educational process and all members of the NYU Stern community are expected to act in accordance with the highest level of academic honesty. Violations will not be tolerated and may result in failure of the assignment, failure of the course, suspension or expulsion from the program.</option>
+                            <option value="collaboration">Collaboration Guidelines: While collaboration and discussion are encouraged for learning purposes, all submitted work must represent your individual understanding and effort. Proper citation is required for all sources, and unauthorized assistance during examinations is strictly prohibited.</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- Stern Code of Conduct (Fixed) -->
+                <section class="form-section" id="code-of-conduct">
+                    <h3>Stern Code of Conduct</h3>
+                    
+                    <div class="form-group">
+                        <label for="codeOfConduct">Code of Conduct (Pre-filled - Required) *</label>
+                        <textarea id="codeOfConduct" name="codeOfConduct" readonly rows="6">The Stern Code of Conduct and Judiciary Process applies to all students enrolled in Stern courses.
+
+For graduate students, information can be found here: https://www.stern.nyu.edu/uc/codeofconduct
+
+For undergraduates, information can be found here: https://www.stern.nyu.edu/portal-partners/current-students/undergraduate/community/community-expectations
+
+To help ensure the integrity of our learning community, prose assignments you submit to NYU Brightspace will be submitted to Turnitin. Turnitin will compare your submission to a database of prior submissions to Turnitin, current and archived Web pages, periodicals, journals, and publications. Additionally, your document will become part of the Turnitin database.</textarea>
+                    </div>
+                </section>
+
+                <!-- Integrity of Credit (Fixed) -->
+                <section class="form-section" id="integrity-credit">
+                    <h3>Integrity of Credit</h3>
+                    
+                    <div class="form-group">
+                        <label for="integrityOfCredit">Integrity of Credit *</label>
+                        <textarea id="integrityOfCredit" name="integrityOfCredit" required rows="3" placeholder="e.g., Students will meet 2x a week for 1.5 hours for 15 weeks for this 3-credit course"></textarea>
+                    </div>
+                </section>
+
+                <!-- General Conduct & Behavior (Fixed) -->
+                <section class="form-section" id="conduct">
+                    <h3>General Conduct & Behavior</h3>
+                    
+                    <div class="form-group">
+                        <label for="generalConduct">General Conduct (Pre-filled - Required) *</label>
+                        <textarea id="generalConduct" name="generalConduct" readonly rows="4">Students are also expected to maintain and abide by the highest standards of professional conduct and behavior. Please familiarize yourself with Stern's Policy in Regard to In-Class Behavior & Expectations for Graduate and Undergraduate students (https://www.stern.nyu.edu/portal-partners/registrar/policies-procedures/general-policies/code-conduct, http://www.stern.nyu.edu/portal-partners/current-students/undergraduate/resources-policies/academic-policies/index.htm) and the NYU Student Conduct Policy (https://www.nyu.edu/about/policies-guidelines-compliance/policies-and-guidelines/universitystudent-conduct-policy.html).</textarea>
+                    </div>
+                </section>
+
+                <!-- Grading Guidelines -->
+                <section class="form-section" id="grading">
+                    <h3>Grading Guidelines</h3>
+                    
+                    <div class="form-group">
+                        <label for="gradingGuidelines">Grading Guidelines *</label>
+                        <select id="gradingGuidelines" name="gradingGuidelines" required>
+                            <option value="">Choose student level...</option>
+                            <option value="undergraduate-core">Undergraduate Core Courses (25+ students): At NYU Stern, we strive to create courses that challenge students intellectually and that meet the Stern standards of academic excellence. To ensure fairness and clarity of grading, the Stern faculty have adopted a grading guideline for core courses with enrollments of more than 25 students in which approximately 35% of students will receive an "A" or "A-" grade.</option>
+                            <option value="undergraduate-small">Undergraduate Core Courses (<25 students): At NYU Stern, we strive to create courses that challenge students intellectually and that meet the Stern standards of academic excellence. In core classes of less than 25 students, the instructor is at liberty to give whatever grades they think the students deserve, while maintaining rigorous academic standards.</option>
+                            <option value="undergraduate-elective">Undergraduate Elective Courses: At NYU Stern, we strive to create courses that challenge students intellectually and that meet the Stern standards of academic excellence. To ensure fairness and clarity of grading, the Stern faculty have agreed that for elective courses the individual instructor or department is responsible for determining reasonable grading guidelines.</option>
+                            <option value="graduate">Graduate Courses: [Instructor determines appropriate grading guidelines for graduate-level courses]</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- Student Accessibility (Fixed) -->
+                <section class="form-section" id="accessibility">
+                    <h3>Student Accessibility</h3>
+                    
+                    <div class="form-group">
+                        <label for="studentAccessibility">Student Accessibility (Pre-filled - Required) *</label>
+                        <textarea id="studentAccessibility" name="studentAccessibility" readonly rows="6">If you will require academic accommodation of any kind during this course, you must notify me at the beginning of the course and provide a letter from the Moses Center for Student Accessibility (212-998-4980, mosescsa@nyu.edu) verifying your registration and outlining the accommodations they recommend. If you will need to take an exam at the Moses Center for Student Accessibility, you must submit a completed Exam Accommodations Form to them at least one week prior to the scheduled exam time to be guaranteed accommodation. For more information, visit the CSA website: https://www.nyu.edu/students/communities-and-groups/student-accessibility.html</textarea>
+                    </div>
+                </section>
+
+                <!-- Student Wellness -->
+                <section class="form-section" id="wellness">
+                    <h3>Student Wellness</h3>
+                    
+                    <div class="form-group">
+                        <label for="studentWellness">Student Wellness Policy</label>
+                        <select id="studentWellness" name="studentWellness">
+                            <option value="">Choose appropriate policy...</option>
+                            <option value="comprehensive">Comprehensive Support: NYU provides a range of support services for student wellness including counseling, health services, and academic support. Students are encouraged to seek help when needed and to prioritize their mental and physical health.</option>
+                            <option value="resources">Resource Information: Students experiencing personal difficulties that affect their academic performance should contact the appropriate support services. Information about counseling, health services, and other resources is available through NYU Student Affairs.</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- Name Pronunciation and Pronouns (Fixed) -->
+                <section class="form-section" id="pronouns">
+                    <h3>Name Pronunciation and Pronouns</h3>
+                    
+                    <div class="form-group">
+                        <label for="namePronouns">Name Pronunciation and Pronouns (Pre-filled - Optional)</label>
+                        <textarea id="namePronouns" name="namePronouns" readonly rows="2">NYU Stern students now have the ability to include their pronouns and name pronunciation in Albert. I encourage you to share your name pronunciation and preferred pronouns this way. Please utilize this link for additional information: Pronouns & Name Pronunciation</textarea>
+                    </div>
+                </section>
+
+                <!-- Religious Observances -->
+                <section class="form-section" id="religious">
+                    <h3>Religious Observances and Absences</h3>
+                    
+                    <div class="form-group">
+                        <label for="religiousObservances">Religious Observances Policy</label>
+                        <select id="religiousObservances" name="religiousObservances">
+                            <option value="">Choose appropriate policy...</option>
+                            <option value="accommodating">Accommodating Policy: NYU respects the rights of students to observe religious holidays. Students should notify the instructor in advance of religious observances that may affect class attendance or assignment due dates. Reasonable accommodations will be made.</option>
+                            <option value="standard">Standard Policy: Students who will miss class due to religious observance should inform the instructor at the beginning of the semester. Alternative arrangements for missed work will be provided when possible.</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- Electronic Devices Policy -->
+                <section class="form-section" id="devices">
+                    <h3>Electronic Devices Policy</h3>
+                    
+                    <div class="form-group">
+                        <label for="electronicDevices">Electronic Devices Policy</label>
+                        <select id="electronicDevices" name="electronicDevices">
+                            <option value="">Choose appropriate policy...</option>
+                            <option value="laptops-allowed">Laptops Allowed: Laptops and tablets are permitted for note-taking and course-related activities. Please use devices respectfully and avoid non-course related activities during class.</option>
+                            <option value="no-devices">No Personal Devices: Personal electronic devices (phones, laptops, tablets) should be turned off and put away during class unless specifically required for course activities.</option>
+                            <option value="phones-only">Phones Only Restricted: Mobile phones should be silenced and put away during class. Laptops and tablets may be used for note-taking and course activities.</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- AI Guidance -->
+                <section class="form-section" id="ai">
+                    <h3>AI Guidance</h3>
+                    
+                    <div class="form-group">
+                        <label for="aiGuidance">AI Guidance</label>
+                        <select id="aiGuidance" name="aiGuidance">
+                            <option value="">Choose AI policy...</option>
+                            <option value="prohibited">AI Prohibited: The use of artificial intelligence tools (such as ChatGPT, Claude, etc.) is not permitted for any assignments in this course. All work must be original and completed without AI assistance.</option>
+                            <option value="limited">Limited AI Use: AI tools may be used for brainstorming and initial research only. All final work must be original, and any AI assistance must be disclosed and properly cited. AI-generated content may not constitute more than 10% of any assignment.</option>
+                            <option value="encouraged">AI Encouraged with Guidelines: AI tools are permitted and can be valuable learning aids. However, students must understand and be able to explain all submitted work. AI assistance must be disclosed and properly cited. Overreliance on AI without understanding will be reflected in assessment.</option>
+                        </select>
+                    </div>
+                </section>
+            </form>
+        </main>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>

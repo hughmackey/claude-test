@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(textutil:*)",
+      "Bash(python3:*)",
+      "Bash(ls:*)",
+      "Bash(pandoc:*)",
+      "Bash(start index.html)",
+      "Bash(start test-export.html)",
+      "Bash(python:*)",
+      "Bash(start http://localhost:8000/index.html)",
+      "Bash(start:*)"
+    ],
+    "deny": []
+  }
+}
