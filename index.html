@@ -169,10 +169,14 @@
                 <!-- Course Outline -->
                 <section class="form-section" id="outline">
                     <h3>Course Outline</h3>
-                    
+
                     <div class="form-group">
-                        <label for="courseOutline">Course Outline *</label>
-                        <textarea id="courseOutline" name="courseOutline" required rows="8" placeholder="Insert a detailed schedule of topics, readings, activities, and due dates."></textarea>
+                        <label>Course Schedule *</label>
+                        <p class="help-text">Organize your course by modules. Each module can contain multiple class days/sessions.</p>
+                        <div id="moduleContainer">
+                            <!-- Modules with nested class days will be added here dynamically -->
+                        </div>
+                        <button type="button" id="addModuleBtn" class="add-btn">Add Module</button>
                     </div>
                 </section>
 

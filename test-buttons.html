@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Test</title>
+    <style>
+        body { padding: 20px; font-family: Arial, sans-serif; }
+        button { padding: 10px 20px; margin: 10px; cursor: pointer; }
+        .container { border: 1px solid #ccc; padding: 20px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>Button Test</h1>
+
+    <div>
+        <button type="button" id="addModuleBtn">Add Module</button>
+        <button type="button" id="addClassDayBtn">Add Class Day</button>
+    </div>
+
+    <h2>Modules:</h2>
+    <div id="moduleContainer"></div>
+
+    <h2>Class Days:</h2>
+    <div id="classDaysContainer"></div>
+
+    <script>
+        console.log('Script loading...');
+
+        function addModule() {
+            console.log('addModule called');
+            const container = document.getElementById('moduleContainer');
+            const moduleItem = document.createElement('div');
+            const moduleNumber = container.children.length + 1;
+            moduleItem.className = 'container';
+            moduleItem.innerHTML = `
+                <input type="text" placeholder="Module ${moduleNumber}: Introduction to Topic">
+                <button type="button" class="remove-module-btn">Remove Module</button>
+            `;
+            container.appendChild(moduleItem);
+        }
+
+        function addClassDay() {
+            console.log('addClassDay called');
+            const container = document.getElementById('classDaysContainer');
+            const classDayItem = document.createElement('div');
+            const dayNumber = container.children.length + 1;
+            classDayItem.className = 'container';
+            classDayItem.innerHTML = `
+                <input type="text" placeholder="Class Day ${dayNumber}: Topic Name">
+                <button type="button" class="remove-class-btn">Remove</button>
+            `;
+            container.appendChild(classDayItem);
+        }
+
+        // Set up event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded');
+
+            document.getElementById('addModuleBtn').addEventListener('click', () => {
+                console.log('Add Module button clicked');
+                addModule();
+            });
+
+            document.getElementById('addClassDayBtn').addEventListener('click', () => {
+                console.log('Add Class Day button clicked');
+                addClassDay();
+            });
+
+            // Event delegation for remove buttons
+            document.getElementById('moduleContainer').addEventListener('click', (e) => {
+                console.log('Module container clicked', e.target);
+                if (e.target.classList.contains('remove-module-btn')) {
+                    console.log('Remove module button clicked');
+                    const container = document.getElementById('moduleContainer');
+                    if (container.children.length > 1) {
+                        e.target.closest('.container').remove();
+                    } else {
+                        alert('Must have at least one module');
+                    }
+                }
+            });
+
+            document.getElementById('classDaysContainer').addEventListener('click', (e) => {
+                console.log('Class days container clicked', e.target);
+                if (e.target.classList.contains('remove-class-btn')) {
+                    console.log('Remove class day button clicked');
+                    const container = document.getElementById('classDaysContainer');
+                    if (container.children.length > 1) {
+                        e.target.closest('.container').remove();
+                    } else {
+                        alert('Must have at least one class day');
+                    }
+                }
+            });
+
+            // Initialize with one of each
+            addModule();
+            addClassDay();
+        });
+    </script>
+</body>
+</html>

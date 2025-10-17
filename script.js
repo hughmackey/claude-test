@@ -10,7 +10,7 @@ class SyllabusBuilder {
             { id: 'communication', optionalFields: ['communicationStrategy'] },
             { id: 'technical', optionalFields: ['technicalRequirements'] },
             { id: 'requirements', requiredFields: ['assignmentTypes', 'gradingPercentages', 'dueDatesPolicy'] },
-            { id: 'outline', requiredFields: ['courseOutline'] },
+            { id: 'outline', customValidator: () => this.validateCourseOutline() },
             { id: 'integrity', requiredFields: ['academicIntegrity'] },
             { id: 'code-of-conduct', requiredFields: ['codeOfConduct'] },
             { id: 'integrity-credit', requiredFields: ['integrityOfCredit'] },
@@ -25,6 +25,7 @@ class SyllabusBuilder {
         ];
 
         this.initializeEventListeners();
+        this.initializeCourseOutlineBuilder();
         this.initializeTOC();
         this.updateTOCStatus();
     }
@@ -42,6 +43,222 @@ class SyllabusBuilder {
         // Update TOC status when form fields change
         this.form.addEventListener('input', () => this.updateTOCStatus());
         this.form.addEventListener('change', () => this.updateTOCStatus());
+    }
+
+    initializeCourseOutlineBuilder() {
+        // Add module button handler
+        const addModuleBtn = document.getElementById('addModuleBtn');
+        if (addModuleBtn) {
+            addModuleBtn.onclick = () => this.addModule();
+        }
+
+        // Set up event delegation for all buttons (one-time setup)
+        this.setupRemoveHandlers();
+
+        // Initialize with one module containing one class day
+        this.addModule();
+    }
+
+    addModule() {
+        const container = document.getElementById('moduleContainer');
+        const moduleItem = document.createElement('div');
+        const moduleNumber = container.children.length + 1;
+        const moduleId = 'module-' + Date.now();
+        moduleItem.className = 'module-item';
+        moduleItem.dataset.moduleId = moduleId;
+        moduleItem.innerHTML = `
+            <div class="module-header">
+                <input type="text" class="module-title" placeholder="Module ${moduleNumber}: Introduction to Topic">
+                <button type="button" class="remove-module-btn">Remove Module</button>
+            </div>
+            <textarea class="module-description" rows="2" placeholder="Brief module description or learning objectives (optional)"></textarea>
+            <div class="module-class-days" data-module-id="${moduleId}">
+                <!-- Class days for this module -->
+            </div>
+            <button type="button" class="add-class-day-btn" data-module-id="${moduleId}">Add Class Day</button>
+        `;
+        container.appendChild(moduleItem);
+
+        // Add one initial class day to the new module
+        this.addClassDay(moduleId);
+
+        this.updateTOCStatus();
+    }
+
+    addClassDay(moduleId) {
+        const container = document.querySelector(`.module-class-days[data-module-id="${moduleId}"]`);
+        if (!container) return;
+
+        const classDayItem = document.createElement('div');
+        const dayNumber = container.children.length + 1;
+        classDayItem.className = 'class-day-item';
+        classDayItem.innerHTML = `
+            <div class="class-day-header">
+                <input type="text" class="class-day-title" placeholder="Class Day ${dayNumber}: Topic Name" required>
+                <button type="button" class="remove-class-btn">Remove</button>
+            </div>
+            <textarea class="class-day-content" rows="6" placeholder="Readings: List your readings here.&#10;&#10;Activity: Describe class activities.&#10;&#10;Assignment: Assignment description and due date." required></textarea>
+        `;
+        container.appendChild(classDayItem);
+        this.updateTOCStatus();
+    }
+
+    setupRemoveHandlers() {
+        // Use event delegation for all buttons (one-time setup)
+        const moduleContainer = document.getElementById('moduleContainer');
+        if (moduleContainer) {
+            moduleContainer.addEventListener('click', (e) => {
+                // Handle "Add Class Day" button clicks
+                if (e.target.classList.contains('add-class-day-btn')) {
+                    const moduleId = e.target.dataset.moduleId;
+                    this.addClassDay(moduleId);
+                }
+
+                // Handle "Remove Module" button clicks
+                if (e.target.classList.contains('remove-module-btn')) {
+                    const moduleItems = moduleContainer.querySelectorAll('.module-item');
+                    if (moduleItems.length > 1) {
+                        e.target.closest('.module-item').remove();
+                        this.updateTOCStatus();
+                    } else {
+                        alert('You must have at least one module.');
+                    }
+                }
+
+                // Handle "Remove Class Day" button clicks
+                if (e.target.classList.contains('remove-class-btn')) {
+                    const moduleItem = e.target.closest('.module-item');
+                    const classDaysContainer = moduleItem.querySelector('.module-class-days');
+                    const classDayItems = classDaysContainer.querySelectorAll('.class-day-item');
+
+                    if (classDayItems.length > 1) {
+                        e.target.closest('.class-day-item').remove();
+                        this.updateTOCStatus();
+                    } else {
+                        alert('Each module must have at least one class day.');
+                    }
+                }
+            });
+        }
+    }
+
+    validateCourseOutline() {
+        // Check if at least one class day has title and content filled
+        const classDays = document.querySelectorAll('.class-day-item');
+        for (let day of classDays) {
+            const title = day.querySelector('.class-day-title').value.trim();
+            const content = day.querySelector('.class-day-content').value.trim();
+            if (title && content) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    collectCourseOutlineData() {
+        // Collect modules with their nested class days
+        const modules = [];
+        document.querySelectorAll('.module-item').forEach(item => {
+            const title = item.querySelector('.module-title').value.trim();
+            const description = item.querySelector('.module-description').value.trim();
+
+            // Collect class days for this module
+            const classDays = [];
+            const classDaysContainer = item.querySelector('.module-class-days');
+            if (classDaysContainer) {
+                classDaysContainer.querySelectorAll('.class-day-item').forEach(dayItem => {
+                    const dayTitle = dayItem.querySelector('.class-day-title').value.trim();
+                    const dayContent = dayItem.querySelector('.class-day-content').value.trim();
+                    if (dayTitle && dayContent) {
+                        classDays.push({ title: dayTitle, content: dayContent });
+                    }
+                });
+            }
+
+            // Only add module if it has content
+            if (title || classDays.length > 0) {
+                modules.push({
+                    title,
+                    description,
+                    classDays
+                });
+            }
+        });
+
+        return { modules };
+    }
+
+    generateCourseOutlineHTML(outlineData) {
+        let html = '';
+
+        // Iterate through modules
+        if (outlineData.modules && outlineData.modules.length > 0) {
+            outlineData.modules.forEach(module => {
+                // Module header
+                if (module.title) {
+                    html += `<div class="course-outline-module">
+                        <h4>${module.title}</h4>`;
+                    if (module.description) {
+                        html += `<p>${module.description}</p>`;
+                    }
+                    html += `</div>`;
+                }
+
+                // Class days table for this module
+                if (module.classDays && module.classDays.length > 0) {
+                    html += `<table class="course-outline-table">
+                        <thead>
+                            <tr>
+                                <th>Class Day & Title</th>
+                                <th>Readings, Assignments, and Activities</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+                    module.classDays.forEach(day => {
+                        const formattedContent = day.content.replace(/\n/g, '<br>');
+                        html += `<tr>
+                            <td class="class-day-title-cell"><strong>${day.title}</strong></td>
+                            <td class="class-day-content-cell">${formattedContent}</td>
+                        </tr>`;
+                    });
+
+                    html += `</tbody></table>`;
+                }
+            });
+        }
+
+        return html;
+    }
+
+    formatCourseOutlineForExport(outlineData) {
+        let text = '';
+
+        // Iterate through modules with their class days
+        if (outlineData.modules && outlineData.modules.length > 0) {
+            outlineData.modules.forEach((module, moduleIndex) => {
+                if (moduleIndex > 0) text += '\n\n';
+
+                // Module header
+                if (module.title) {
+                    text += `${module.title}\n`;
+                    if (module.description) {
+                        text += `${module.description}\n`;
+                    }
+                    text += '\n';
+                }
+
+                // Class days for this module
+                if (module.classDays && module.classDays.length > 0) {
+                    module.classDays.forEach((day, dayIndex) => {
+                        if (dayIndex > 0) text += '\n';
+                        text += `${day.title}\n${day.content}\n`;
+                    });
+                }
+            });
+        }
+
+        return text;
     }
 
     initializeTOC() {
@@ -111,8 +328,17 @@ class SyllabusBuilder {
                 }
             };
 
+            // Check if section has a custom validator
+            if (section.customValidator) {
+                const isValid = section.customValidator();
+                if (isValid) {
+                    link.classList.add('complete');
+                } else {
+                    link.classList.add('incomplete');
+                }
+            }
             // Check if section has required fields
-            if (section.requiredFields && section.requiredFields.length > 0) {
+            else if (section.requiredFields && section.requiredFields.length > 0) {
                 // Required section
                 const allFilled = section.requiredFields.every(isFieldFilled);
 
@@ -177,6 +403,9 @@ class SyllabusBuilder {
             data[key] = value;
         }
 
+        // Add course outline data
+        data.courseOutline = this.collectCourseOutlineData();
+
         return data;
     }
 
@@ -202,17 +431,75 @@ class SyllabusBuilder {
     // Populate form with data
     populateForm(data) {
         Object.keys(data).forEach(key => {
-            const element = document.getElementById(key);
-            if (element) {
-                if (element.type === 'checkbox') {
-                    element.checked = data[key] === 'true';
-                } else {
-                    element.value = data[key];
+            if (key === 'courseOutline') {
+                // Handle course outline separately
+                this.populateCourseOutline(data[key]);
+            } else {
+                const element = document.getElementById(key);
+                if (element) {
+                    if (element.type === 'checkbox') {
+                        element.checked = data[key] === 'true';
+                    } else {
+                        element.value = data[key];
+                    }
                 }
             }
         });
         // Update TOC status after populating form
         this.updateTOCStatus();
+    }
+
+    populateCourseOutline(outlineData) {
+        if (!outlineData || typeof outlineData === 'string') {
+            // Legacy format - just text
+            return;
+        }
+
+        // Clear existing items
+        const moduleContainer = document.getElementById('moduleContainer');
+        moduleContainer.innerHTML = '';
+
+        // Populate modules with nested class days
+        if (outlineData.modules && outlineData.modules.length > 0) {
+            outlineData.modules.forEach(module => {
+                const moduleId = 'module-' + Date.now() + Math.random();
+                const moduleItem = document.createElement('div');
+                moduleItem.className = 'module-item';
+                moduleItem.dataset.moduleId = moduleId;
+                moduleItem.innerHTML = `
+                    <div class="module-header">
+                        <input type="text" class="module-title" placeholder="Module: Introduction to Topic" value="${module.title || ''}">
+                        <button type="button" class="remove-module-btn">Remove Module</button>
+                    </div>
+                    <textarea class="module-description" rows="2" placeholder="Brief module description or learning objectives (optional)">${module.description || ''}</textarea>
+                    <div class="module-class-days" data-module-id="${moduleId}">
+                        <!-- Class days for this module -->
+                    </div>
+                    <button type="button" class="add-class-day-btn" data-module-id="${moduleId}">Add Class Day</button>
+                `;
+                moduleContainer.appendChild(moduleItem);
+
+                // Populate class days for this module
+                const classDaysContainer = moduleItem.querySelector('.module-class-days');
+                if (module.classDays && module.classDays.length > 0) {
+                    module.classDays.forEach(day => {
+                        const classDayItem = document.createElement('div');
+                        classDayItem.className = 'class-day-item';
+                        classDayItem.innerHTML = `
+                            <div class="class-day-header">
+                                <input type="text" class="class-day-title" placeholder="Class Day: Topic Name" value="${day.title || ''}" required>
+                                <button type="button" class="remove-class-btn">Remove</button>
+                            </div>
+                            <textarea class="class-day-content" rows="6" placeholder="Readings: ..." required>${day.content || ''}</textarea>
+                        `;
+                        classDaysContainer.appendChild(classDayItem);
+                    });
+                }
+            });
+        } else {
+            // Add default module
+            this.addModule();
+        }
     }
 
     // Save syllabus as JSON for editing
@@ -272,12 +559,27 @@ class SyllabusBuilder {
         }
 
         // Validation
-        const requiredFields = ['courseTitle', 'courseNumber', 'term', 'credits', 'instructorName', 'officeHours', 'classSchedule', 'courseDescription', 'learningOutcomes', 'assignmentTypes', 'gradingPercentages', 'dueDatesPolicy', 'courseOutline', 'academicIntegrity', 'integrityOfCredit', 'gradingGuidelines'];
+        const requiredFields = ['courseTitle', 'courseNumber', 'term', 'credits', 'instructorName', 'officeHours', 'classSchedule', 'courseDescription', 'learningOutcomes', 'assignmentTypes', 'gradingPercentages', 'dueDatesPolicy', 'academicIntegrity', 'integrityOfCredit', 'gradingGuidelines'];
 
         const missingFields = requiredFields.filter(field => !data[field] || data[field].trim() === '');
 
         if (missingFields.length > 0) {
             alert(`Please fill in all required fields: ${missingFields.map(f => f.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())).join(', ')}`);
+            return;
+        }
+
+        // Validate course outline
+        if (!data.courseOutline || !data.courseOutline.modules || data.courseOutline.modules.length === 0) {
+            alert('Please add at least one module to the course outline.');
+            return;
+        }
+
+        // Check that at least one module has class days
+        const hasClassDays = data.courseOutline.modules.some(module =>
+            module.classDays && module.classDays.length > 0
+        );
+        if (!hasClassDays) {
+            alert('Please add at least one class day to the course outline.');
             return;
         }
 
@@ -468,7 +770,7 @@ class SyllabusBuilder {
                                 })
                             ]
                         }),
-                        ...this.createParagraphsFromText(data.courseOutline),
+                        ...this.createParagraphsFromText(this.formatCourseOutlineForExport(data.courseOutline)),
                         
                         // All the required sections
                         ...this.generateRequiredSections(data)
@@ -727,12 +1029,27 @@ class SyllabusBuilder {
         }
 
         // Validation
-        const requiredFields = ['courseTitle', 'courseNumber', 'term', 'credits', 'instructorName', 'officeHours', 'classSchedule', 'courseDescription', 'learningOutcomes', 'assignmentTypes', 'gradingPercentages', 'dueDatesPolicy', 'courseOutline', 'academicIntegrity', 'integrityOfCredit', 'gradingGuidelines'];
+        const requiredFields = ['courseTitle', 'courseNumber', 'term', 'credits', 'instructorName', 'officeHours', 'classSchedule', 'courseDescription', 'learningOutcomes', 'assignmentTypes', 'gradingPercentages', 'dueDatesPolicy', 'academicIntegrity', 'integrityOfCredit', 'gradingGuidelines'];
 
         const missingFields = requiredFields.filter(field => !data[field] || data[field].trim() === '');
 
         if (missingFields.length > 0) {
             alert(`Please fill in all required fields: ${missingFields.map(f => f.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())).join(', ')}`);
+            return;
+        }
+
+        // Validate course outline
+        if (!data.courseOutline || !data.courseOutline.modules || data.courseOutline.modules.length === 0) {
+            alert('Please add at least one module to the course outline.');
+            return;
+        }
+
+        // Check that at least one module has class days
+        const hasClassDays = data.courseOutline.modules.some(module =>
+            module.classDays && module.classDays.length > 0
+        );
+        if (!hasClassDays) {
+            alert('Please add at least one class day to the course outline.');
             return;
         }
 
@@ -829,7 +1146,7 @@ class SyllabusBuilder {
             // Course Outline
             addText('Course Outline', 14, true, [87, 6, 140]);
             addSpacing(3);
-            addText(data.courseOutline, 11);
+            addText(this.formatCourseOutlineForExport(data.courseOutline), 11);
             addSpacing(10);
 
             // Academic Integrity
@@ -967,7 +1284,7 @@ class SyllabusBuilder {
             
             <div style="margin-bottom: 25px;">
                 <h3 style="color: #57068C; border-bottom: 2px solid #57068C; padding-bottom: 5px;">Course Outline</h3>
-                <div style="white-space: pre-line;">${data.courseOutline}</div>
+                ${this.generateCourseOutlineHTML(data.courseOutline)}
             </div>
             
             <div style="margin-bottom: 25px;">
