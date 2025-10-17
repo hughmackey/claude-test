@@ -1,4 +1,4 @@
-import { Document, Paragraph, TextRun, Packer, AlignmentType } from 'https://cdn.jsdelivr.net/npm/docx@8.5.0/+esm';
+import { Document, Paragraph, TextRun, Packer, AlignmentType, Table, TableRow, TableCell, WidthType, BorderStyle, VerticalAlign } from 'https://cdn.jsdelivr.net/npm/docx@8.5.0/+esm';
 
 class SyllabusBuilder {
     constructor() {
@@ -428,6 +428,108 @@ class SyllabusBuilder {
         }));
     }
 
+    // Generate Word tables for course outline
+    generateCourseOutlineTables(outlineData) {
+        const elements = [];
+
+        if (outlineData.modules && outlineData.modules.length > 0) {
+            outlineData.modules.forEach(module => {
+                // Module header
+                if (module.title) {
+                    elements.push(new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: module.title,
+                                bold: true,
+                                size: 24,
+                                color: "57068C"
+                            })
+                        ],
+                        spacing: { before: 240, after: 120 }
+                    }));
+
+                    if (module.description) {
+                        // Handle line breaks in description
+                        const descLines = module.description.split('\n');
+                        descLines.forEach(line => {
+                            elements.push(new Paragraph({
+                                children: [new TextRun({ text: line || ' ' })],
+                                spacing: { after: line === descLines[descLines.length - 1] ? 200 : 0 }
+                            }));
+                        });
+                    }
+                }
+
+                // Create table for class days
+                if (module.classDays && module.classDays.length > 0) {
+                    const tableRows = [
+                        // Header row
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [new Paragraph({
+                                        children: [new TextRun({ text: "Class Day & Title", bold: true, color: "FFFFFF" })],
+                                        alignment: AlignmentType.LEFT
+                                    })],
+                                    shading: { fill: "57068C" },
+                                    width: { size: 35, type: WidthType.PERCENTAGE },
+                                    verticalAlign: VerticalAlign.CENTER
+                                }),
+                                new TableCell({
+                                    children: [new Paragraph({
+                                        children: [new TextRun({ text: "Readings, Assignments, and Activities", bold: true, color: "FFFFFF" })],
+                                        alignment: AlignmentType.LEFT
+                                    })],
+                                    shading: { fill: "57068C" },
+                                    width: { size: 65, type: WidthType.PERCENTAGE },
+                                    verticalAlign: VerticalAlign.CENTER
+                                })
+                            ]
+                        })
+                    ];
+
+                    // Data rows
+                    module.classDays.forEach(day => {
+                        const contentLines = day.content.split('\n');
+                        const contentParagraphs = contentLines.map(line =>
+                            new Paragraph({
+                                children: [new TextRun({ text: line || ' ' })]
+                            })
+                        );
+
+                        tableRows.push(new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [new Paragraph({
+                                        children: [new TextRun({ text: day.title, bold: true })],
+                                        alignment: AlignmentType.LEFT
+                                    })],
+                                    width: { size: 35, type: WidthType.PERCENTAGE },
+                                    verticalAlign: VerticalAlign.TOP
+                                }),
+                                new TableCell({
+                                    children: contentParagraphs,
+                                    width: { size: 65, type: WidthType.PERCENTAGE },
+                                    verticalAlign: VerticalAlign.TOP
+                                })
+                            ]
+                        }));
+                    });
+
+                    elements.push(new Table({
+                        rows: tableRows,
+                        width: { size: 100, type: WidthType.PERCENTAGE }
+                    }));
+
+                    // Add spacing after table
+                    elements.push(new Paragraph({ text: "", spacing: { after: 200 } }));
+                }
+            });
+        }
+
+        return elements;
+    }
+
     // Populate form with data
     populateForm(data) {
         Object.keys(data).forEach(key => {
@@ -770,7 +872,7 @@ class SyllabusBuilder {
                                 })
                             ]
                         }),
-                        ...this.createParagraphsFromText(this.formatCourseOutlineForExport(data.courseOutline)),
+                        ...this.generateCourseOutlineTables(data.courseOutline),
                         
                         // All the required sections
                         ...this.generateRequiredSections(data)
@@ -1145,9 +1247,98 @@ class SyllabusBuilder {
 
             // Course Outline
             addText('Course Outline', 14, true, [87, 6, 140]);
-            addSpacing(3);
-            addText(this.formatCourseOutlineForExport(data.courseOutline), 11);
-            addSpacing(10);
+            addSpacing(5);
+
+            // Generate tables for each module
+            if (data.courseOutline.modules && data.courseOutline.modules.length > 0) {
+                data.courseOutline.modules.forEach((module) => {
+                    // Module header
+                    if (module.title) {
+                        pdf.setFontSize(12);
+                        pdf.setFont('helvetica', 'bold');
+                        pdf.setTextColor(87, 6, 140);
+                        if (yPosition + 10 > pageHeight - margin) {
+                            pdf.addPage();
+                            yPosition = margin;
+                        }
+                        pdf.text(module.title, margin, yPosition);
+                        yPosition += 6;
+
+                        if (module.description) {
+                            pdf.setFont('helvetica', 'normal');
+                            pdf.setTextColor(0, 0, 0);
+                            pdf.setFontSize(10);
+                            const descLines = pdf.splitTextToSize(module.description, contentWidth);
+                            for (let line of descLines) {
+                                if (yPosition + 5 > pageHeight - margin) {
+                                    pdf.addPage();
+                                    yPosition = margin;
+                                }
+                                pdf.text(line, margin, yPosition);
+                                yPosition += 5;
+                            }
+                            yPosition += 3;
+                        }
+                    }
+
+                    // Create table for class days using autoTable if available
+                    if (module.classDays && module.classDays.length > 0) {
+                        const tableData = module.classDays.map(day => [
+                            day.title,
+                            day.content
+                        ]);
+
+                        // Check for page break
+                        if (yPosition > pageHeight - 50) {
+                            pdf.addPage();
+                            yPosition = margin;
+                        }
+
+                        // Use autoTable if available, otherwise fallback to manual table
+                        if (typeof pdf.autoTable === 'function') {
+                            const tableWidth = pageWidth - (2 * margin);
+                            pdf.autoTable({
+                                startY: yPosition,
+                                head: [['Class Day & Title', 'Readings, Assignments, and Activities']],
+                                body: tableData,
+                                theme: 'grid',
+                                headStyles: {
+                                    fillColor: [87, 6, 140],
+                                    textColor: [255, 255, 255],
+                                    fontStyle: 'bold',
+                                    halign: 'left'
+                                },
+                                columnStyles: {
+                                    0: { cellWidth: tableWidth * 0.35, fontStyle: 'bold' },
+                                    1: { cellWidth: tableWidth * 0.65 }
+                                },
+                                styles: {
+                                    fontSize: 9,
+                                    cellPadding: 3,
+                                    valign: 'top',
+                                    overflow: 'linebreak',
+                                    cellWidth: 'wrap'
+                                },
+                                margin: { left: margin, right: margin },
+                                tableWidth: 'auto'
+                            });
+                            yPosition = pdf.lastAutoTable.finalY + 10;
+                        } else {
+                            // Fallback: simple text output
+                            addText('Class Days:', 11, true);
+                            module.classDays.forEach(day => {
+                                addText(`${day.title}:`, 10, true);
+                                addText(day.content, 9);
+                                addSpacing(3);
+                            });
+                        }
+                    }
+
+                    addSpacing(5);
+                });
+            }
+
+            addSpacing(5);
 
             // Academic Integrity
             addText('Academic Integrity', 14, true, [87, 6, 140]);
